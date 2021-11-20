@@ -1,0 +1,70 @@
+.\" Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: November 20 2021$
+.Dt LSTUN 1
+.Os
+.Sh NAME
+.Nm lstun
+.Nd lazy ssh tunnel
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Fl B Ar port:host:hostport
+.Fl b Ar addr
+.Op Fl t Ar timeout
+.Ar destination
+.Ek
+.Sh DESCRIPTION
+.Nm
+binds the local
+.Ar addr
+and lazily spawns an
+.Xr ssh 1
+instance to forward the traffic to a remote end.
+After
+.Ar timeout
+seconds
+from the last client activity, the ssh tunnel is closed.
+.Pp
+The
+.Xr ssh 1
+tunnel is established by running
+.Bk
+.Pa /usr/bin/ssh
+.Fl L Ar port:host:hostport
+.Fl NTq
+.Ar destination .
+.Ek
+.Pp
+The arguments are as follows:
+.Bl -tag -width Ds
+.It Fl B Ar port:host:hostport
+Fed to
+.Xr ssh 1
+.Fl L
+flag.
+.It Fl b Ar addr
+Where to bind the local socket.
+A port number or the tuple host:port.
+.It Fl t Ar timeout
+Number of seconds after after the last client shutdown to kill the ssh
+process.
+Defaults to 120.
+.El
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+utility was written by
+.An Omar Polo Aq Mt op@omarpolo.com .
