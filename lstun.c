@@ -337,8 +337,7 @@ bind_socket(void)
 int
 main(int argc, char **argv)
 {
-	pid_t pid;
-	int ch, tout, i, status;
+	int ch, tout, i;
 	const char *errstr;
 
 	while ((ch = getopt(argc, argv, "B:b:t:")) != -1) {
