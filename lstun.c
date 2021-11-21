@@ -106,7 +106,8 @@ spawn_ssh(void)
 		    "-NTq", ssh_dest, NULL);
 		err(1, "exec");
 	default:
-		sleep(5); /* XXX: wait for ssh to bind the port... */
+		/* TODO: wait just a bit to let ssh to do its things */
+		sleep(5);
 	}
 }
 
