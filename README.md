@@ -3,8 +3,8 @@
 lstun is a simple utility to lazily (on demand) spawn a ssh tunnel to
 a remote machine and kill it after some time of inactivity.
 
-Given its narrow scope, it's probably not useful to anybody but me, so
-I haven't invested much time in making it easily portable.  Said that,
+Given its narrow scope, it's probably not useful to anybody but me so
+I haven't invested much time in making it easily portable.  That said,
 it shouldn't be hard to compile it in non-OpenBSD systems: you have
 just to compile it by hand and (probably) provide an implementation
 for strtonum(3) and getprogname(3).
