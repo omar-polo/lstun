@@ -38,6 +38,10 @@
 #define MAXSOCK 4
 #define MAXCONN 16
 
+#ifndef __OpenBSD__
+#define pledge(p, e) 0
+#endif
+
 int		 rport;		/* ssh port */
 const char	*addr;		/* our addr */
 const char	*ssh_tunnel_flag;
