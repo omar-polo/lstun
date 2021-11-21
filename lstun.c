@@ -259,9 +259,9 @@ do_accept(int fd, short event, void *data)
 			if (conns[i].sourcebev == NULL ||
 			    conns[i].tobev == NULL)
 				err(1, "bufferevent_new");
-			bufferevent_enable(conns[i].sourcebev, 
+			bufferevent_enable(conns[i].sourcebev,
 			    EV_READ|EV_WRITE);
-			bufferevent_enable(conns[i].tobev, 
+			bufferevent_enable(conns[i].tobev,
 			    EV_READ|EV_WRITE);
 			break;
 		}
