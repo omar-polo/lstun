@@ -65,10 +65,10 @@ pid_t		 ssh_pid = -1;
 int		 conn;
 
 struct conn {
-	int		source;
-	struct bufferevent *sourcebev;
-	int		to;
-	struct bufferevent *tobev;
+	int			 source;
+	struct bufferevent	*sourcebev;
+	int			 to;
+	struct bufferevent	*tobev;
 } conns[MAXCONN];
 
 static void
