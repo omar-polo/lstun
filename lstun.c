@@ -161,8 +161,8 @@ errcb(struct bufferevent *bev, short event, void *d)
 	c->to = -1;
 
 	if (--conn == 0) {
-		warnx("scheduling ssh termination (%lds)",
-		    timeout.tv_sec);
+		warnx("scheduling ssh termination (%llds)",
+		    (long long)timeout.tv_sec);
 		evtimer_set(&timeoutev, killing_time, NULL);
 		evtimer_add(&timeoutev, &timeout);
 	}
