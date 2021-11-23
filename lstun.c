@@ -299,7 +299,7 @@ do_accept(int fd, short event, void *data)
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: %s -B port:host:hostport -b addr [-t timeout]"
+	fprintf(stderr, "usage: %s -B sshaddr -b addr [-t timeout]"
 	    " destination\n", getprogname());
 	exit(1);
 }

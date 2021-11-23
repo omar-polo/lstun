@@ -11,7 +11,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: November 20 2021$
+.Dd $Mdocdate: November 23 2021$
 .Dt LSTUN 1
 .Os
 .Sh NAME
@@ -20,7 +20,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Fl B Ar port:host:hostport
+.Fl B Ar sshaddr
 .Fl b Ar addr
 .Op Fl t Ar timeout
 .Ar destination
@@ -42,14 +42,19 @@ The
 tunnel is established by running
 .Bk
 .Pa /usr/bin/ssh
-.Fl L Ar port:host:hostport
+.Fl L Ar sshaddr
 .Fl NTq
 .Ar destination .
 .Ek
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl B Ar port:host:hostport
+.It Fl B Xo
+.Sm off
+.Oo Ar bind_address : Oc
+.Ar port : host : hostport
+.Sm on
+.Xc
 Fed to
 .Xr ssh 1
 .Fl L
