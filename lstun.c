@@ -45,7 +45,6 @@
 #define pledge(p, e) 0
 #endif
 
-int		 rport;		/* ssh port */
 const char	*addr;		/* our addr */
 const char	*ssh_tflag;
 const char	*ssh_dest;
