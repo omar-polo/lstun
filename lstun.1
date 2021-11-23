@@ -69,13 +69,6 @@ The
 utility was written by
 .An Omar Polo Aq Mt op@omarpolo.com .
 .Sh CAVEATS
-There's a 5 second timeout after spawning
-.Xr ssh 1
-to wait for the tunnel to be established.
-It should really sleep for a little less
-.Pq say one second
-and then retry to connect multiple times until it succeed.
-.Pp
 Currently it's impossible to pass flags to the
 .Xr ssh 1
 subcommand.
