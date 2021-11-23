@@ -38,6 +38,8 @@
 
 #define MAXSOCK 4
 #define MAXCONN 16
+#define BACKOFF 1
+#define RETRIES 8
 
 #ifndef __OpenBSD__
 #define pledge(p, e) 0
@@ -69,6 +71,9 @@ pid_t		 ssh_pid = -1;
 int		 conn;
 
 struct conn {
+	int			 ntentative;
+	struct timeval		 retry;
+	struct event		 waitev;
 	int			 source;
 	struct bufferevent	*sourcebev;
 	int			 to;
@@ -112,8 +117,7 @@ spawn_ssh(void)
 		    NULL);
 		err(1, "exec");
 	default:
-		/* TODO: wait just a bit to let ssh to do its things */
-		sleep(5);
+		return;
 	}
 }
 
@@ -211,16 +215,53 @@ connect_to_ssh(void)
 	}
 
 	if (sock == -1)
-		err(1, "%s", cause);
+		warnx("%s", cause);
 
 	freeaddrinfo(res0);
 	return sock;
 }
 
 static void
+try_to_connect(int fd, short event, void *d)
+{
+	struct conn *c = d;
+
+	/* ssh may die in the meantime */
+	if (ssh_pid == -1) {
+		close(c->source);
+		c->source = -1;
+		return;
+	}
+
+	c->ntentative++;
+	warnx("trying to connect to %s:%s (%d/%d)", ssh_host, ssh_port,
+	    c->ntentative, RETRIES);
+
+	if ((c->to = connect_to_ssh()) == -1) {
+		if (c->ntentative == RETRIES) {
+			warnx("giving up");
+			close(c->source);
+			c->source = -1;
+			return;
+		}
+
+		evtimer_set(&c->waitev, try_to_connect, c);
+		evtimer_add(&c->waitev, &c->retry);
+		return;
+	}
+
+	c->sourcebev = bufferevent_new(c->source, sreadcb, nopcb, errcb, c);
+	c->tobev = bufferevent_new(c->to, treadcb, nopcb, errcb, c);
+	if (c->sourcebev == NULL || c->tobev == NULL)
+		err(1, "bufferevent_new");
+	bufferevent_enable(c->sourcebev, EV_READ|EV_WRITE);
+	bufferevent_enable(c->tobev, EV_READ|EV_WRITE);
+}
+
+static void
 do_accept(int fd, short event, void *data)
 {
-	int s, sock, i;
+	int s, i;
 
 	warnx("handling connection");
 
@@ -241,26 +282,17 @@ do_accept(int fd, short event, void *data)
 	if (ssh_pid == -1)
 		spawn_ssh();
 
-	warnx("binding the socket to ssh");
-	sock = connect_to_ssh();
-
 	for (i = 0; i < MAXCONN; ++i) {
-		if (conns[i].source == -1) {
-			conns[i].source = s;
-			conns[i].to = sock;
-			conns[i].sourcebev = bufferevent_new(s,
-			    sreadcb, nopcb, errcb, &conns[i]);
-			conns[i].tobev = bufferevent_new(sock,
-			    treadcb, nopcb, errcb, &conns[i]);
-			if (conns[i].sourcebev == NULL ||
-			    conns[i].tobev == NULL)
-				err(1, "bufferevent_new");
-			bufferevent_enable(conns[i].sourcebev,
-			    EV_READ|EV_WRITE);
-			bufferevent_enable(conns[i].tobev,
-			    EV_READ|EV_WRITE);
-			break;
-		}
+		if (conns[i].source != -1)
+			continue;
+
+		conns[i].source = s;
+		conns[i].ntentative = 0;
+		conns[i].retry.tv_sec = BACKOFF;
+		conns[i].retry.tv_usec = 0;
+		evtimer_set(&conns[i].waitev, try_to_connect, &conns[i]);
+		evtimer_add(&conns[i].waitev, &conns[i].retry);
+		break;
 	}
 }
 
