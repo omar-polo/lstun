@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -46,6 +47,9 @@ int		 rport;		/* ssh port */
 const char	*addr;		/* our addr */
 const char	*ssh_tunnel_flag;
 const char	*ssh_dest;
+
+char		 ssh_host[256];
+char		 ssh_port[16];
 
 struct event	 sockev[MAXSOCK];
 int		 socks[MAXSOCK];
@@ -175,27 +179,16 @@ connect_to_ssh(void)
 {
 	struct addrinfo hints, *res, *res0;
 	int r, saved_errno, sock;
-	char port[16];
-	const char *c, *cause;
-
-	if ((c = strchr(ssh_tunnel_flag, ':')) == NULL)
-		errx(1, "wrong flag format: %s", ssh_tunnel_flag);
-
-	if ((size_t)(c - ssh_tunnel_flag) >= sizeof(port)-1)
-		errx(1, "EPORTTOOLONG");
-
-	memset(port, 0, sizeof(port));
-	memcpy(port, ssh_tunnel_flag, c - ssh_tunnel_flag);
+	const char *cause;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	/* XXX: hardcoded */
-	r = getaddrinfo("localhost", port, &hints, &res0);
+	r = getaddrinfo(ssh_host, ssh_port, &hints, &res0);
 	if (r != 0)
-		errx(1, "getaddrinfo(\"localhost\", \"%s\"): %s",
-		    port, gai_strerror(r));
+		errx(1, "getaddrinfo(\"%s\", \"%s\"): %s",
+		    ssh_host, ssh_port, gai_strerror(r));
 
 	for (res = res0; res; res = res->ai_next) {
 		sock = socket(res->ai_family, res->ai_socktype,
@@ -279,6 +272,20 @@ usage(void)
 	exit(1);
 }
 
+static const char *
+copysec(const char *s, char *d, size_t len)
+{
+	const char *c;
+
+	if ((c = strchr(s, ':')) == NULL)
+		return NULL;
+	if ((size_t)(c - s) >= len-1)
+		return NULL;
+	memset(d, 0, len);
+	memcpy(d, s, c - s);
+	return c;
+}
+
 static void
 bind_socket(void)
 {
@@ -291,10 +298,8 @@ bind_socket(void)
 		h = NULL;
 		port = addr;
 	} else {
-		if ((size_t)(c - addr) >= sizeof(host) -1)
+		if ((c = copysec(addr, host, sizeof(host))) == NULL)
 			errx(1, "ENAMETOOLONG");
-		memset(host, 0, sizeof(host));
-		memcpy(host, c, c - addr);
 
 		h = host;
 		port = c+1;
@@ -336,6 +341,30 @@ bind_socket(void)
 	freeaddrinfo(res0);
 }
 
+static void
+parse_tflag(void)
+{
+	const char *c;
+
+	if (isdigit(*ssh_tunnel_flag)) {
+		strlcpy(ssh_host, "localhost", sizeof(ssh_host));
+		if (copysec(ssh_tunnel_flag, ssh_port, sizeof(ssh_port))
+		    == NULL)
+			goto err;
+		return;
+	}
+
+	if ((c = copysec(ssh_tunnel_flag, ssh_host, sizeof(ssh_host)))
+	    == NULL)
+		goto err;
+	if (copysec(c+1, ssh_port, sizeof(ssh_port)) == NULL)
+		goto err;
+	return;
+
+err:
+	errx(1, "wrong value for -B");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -346,6 +375,7 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'B':
 			ssh_tunnel_flag = optarg;
+			parse_tflag();
 			break;
 		case 'b':
 			addr = optarg;
