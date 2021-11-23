@@ -296,14 +296,6 @@ do_accept(int fd, short event, void *data)
 	}
 }
 
-static void __dead
-usage(void)
-{
-	fprintf(stderr, "usage: %s -B sshaddr -b addr [-t timeout]"
-	    " destination\n", getprogname());
-	exit(1);
-}
-
 static const char *
 copysec(const char *s, char *d, size_t len)
 {
@@ -393,6 +385,14 @@ parse_tflag(void)
 
 err:
 	errx(1, "wrong value for -B");
+}
+
+static void __dead
+usage(void)
+{
+	fprintf(stderr, "usage: %s -B sshaddr -b addr [-t timeout]"
+	    " destination\n", getprogname());
+	exit(1);
 }
 
 int
