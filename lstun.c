@@ -398,7 +398,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int ch, tout, i;
+	int ch, i, tout = 0;
 	const char *errstr;
 
 	while ((ch = getopt(argc, argv, "B:b:t:")) != -1) {
