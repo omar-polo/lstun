@@ -45,7 +45,7 @@
 
 int		 rport;		/* ssh port */
 const char	*addr;		/* our addr */
-const char	*ssh_tunnel_flag;
+const char	*ssh_tflag;
 const char	*ssh_dest;
 
 char		 ssh_host[256];
@@ -108,8 +108,8 @@ spawn_ssh(void)
 	case -1:
 		err(1, "fork");
 	case 0:
-		execl(SSH_PATH, "ssh", "-L", ssh_tunnel_flag,
-		    "-NTq", ssh_dest, NULL);
+		execl(SSH_PATH, "ssh", "-L", ssh_tflag, "-NTq", ssh_dest,
+		    NULL);
 		err(1, "exec");
 	default:
 		/* TODO: wait just a bit to let ssh to do its things */
@@ -346,16 +346,14 @@ parse_tflag(void)
 {
 	const char *c;
 
-	if (isdigit(*ssh_tunnel_flag)) {
+	if (isdigit(*ssh_tflag)) {
 		strlcpy(ssh_host, "localhost", sizeof(ssh_host));
-		if (copysec(ssh_tunnel_flag, ssh_port, sizeof(ssh_port))
-		    == NULL)
+		if (copysec(ssh_tflag, ssh_port, sizeof(ssh_port)) == NULL)
 			goto err;
 		return;
 	}
 
-	if ((c = copysec(ssh_tunnel_flag, ssh_host, sizeof(ssh_host)))
-	    == NULL)
+	if ((c = copysec(ssh_tflag, ssh_host, sizeof(ssh_host))) == NULL)
 		goto err;
 	if (copysec(c+1, ssh_port, sizeof(ssh_port)) == NULL)
 		goto err;
@@ -374,7 +372,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "B:b:t:")) != -1) {
 		switch (ch) {
 		case 'B':
-			ssh_tunnel_flag = optarg;
+			ssh_tflag = optarg;
 			parse_tflag();
 			break;
 		case 'b':
@@ -392,7 +390,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1 || addr == NULL || ssh_tunnel_flag == NULL)
+	if (argc != 1 || addr == NULL || ssh_tflag == NULL)
 		usage();
 
 	if (tout == 0)
