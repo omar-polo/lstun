@@ -89,9 +89,8 @@ static void
 chld(int fd, short event, void *data)
 {
 	int status;
-	pid_t pid;
 
-	if ((pid = waitpid(ssh_pid, &status, WNOHANG)) == -1)
+	if (waitpid(ssh_pid, &status, WNOHANG) == -1)
 		err(1, "waitpid");
 
 	ssh_pid = -1;
