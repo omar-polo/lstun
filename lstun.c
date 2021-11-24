@@ -214,7 +214,7 @@ connect_to_ssh(void)
 	}
 
 	if (sock == -1)
-		warnx("%s", cause);
+		warn("%s", cause);
 
 	freeaddrinfo(res0);
 	return sock;
