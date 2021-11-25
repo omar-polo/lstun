@@ -319,7 +319,7 @@ static void
 bind_socket(void)
 {
 	struct addrinfo hints, *res, *res0;
-	int r, saved_errno;
+	int v, r, saved_errno;
 	char host[64];
 	const char *c, *h, *port, *cause;
 
@@ -358,6 +358,16 @@ bind_socket(void)
 			errno = saved_errno;
 			continue;
 		}
+
+		v = 1;
+		if (setsockopt(socks[nsock], SOL_SOCKET, SO_REUSEADDR, &v,
+		    sizeof(v)) == -1)
+			fatal("setsockopt(SO_REUSEADDR)");
+
+		v = 1;
+		if (setsockopt(socks[nsock], SOL_SOCKET, SO_REUSEPORT, &v,
+		    sizeof(v)) == -1)
+			fatal("setsockopt(SO_REUSEPORT)");
 
 		listen(socks[nsock], 5);
 
