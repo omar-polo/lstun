@@ -19,15 +19,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_ERR
-# include <err.h>
-#else
-void		 err(int, const char*, ...);
-void		 errx(int, const char*, ...);
-void		 warn(const char*, ...);
-void		 warnx(const char*, ...);
-#endif
-
 #ifndef HAVE_GETPROGNAME
 const char	*getprogname(void);
 #endif

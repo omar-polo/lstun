@@ -5,7 +5,6 @@ AC_PROG_CC_C99
 AC_USE_SYSTEM_EXTENSIONS
 
 AC_REPLACE_FUNCS([
-	err \
 	getprogname \
 	strtonum \
 ])
