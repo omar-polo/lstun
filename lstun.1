@@ -76,6 +76,15 @@ Defaults to 120.
 .It Fl v
 Produce more verbose output.
 .El
+.Sh EXAMPLES
+Forward traffic on the port 2525 to the remote port 25
+.Po note that 2526 is binded by ssh while
+.Nm
+listens on 2525 and forwards the traffic
+.Pc
+.Bd -literal -offset indent
+$ lstun -B 2526:localhost:25 -b 2525 example.com
+.Ed
 .Sh AUTHORS
 .An -nosplit
 The
