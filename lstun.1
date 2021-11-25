@@ -20,6 +20,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
+.Op Fl dv
 .Fl B Ar sshaddr
 .Fl b Ar addr
 .Op Fl t Ar timeout
@@ -62,11 +63,18 @@ flag.
 .It Fl b Ar addr
 Where to bind the local socket.
 A port number or the tuple host:port.
+.It Fl d
+Do not daemonize.
+.Nm
+will run in the foregound and log to
+.Em stderr .
 .It Fl t Ar timeout
 Number of seconds after the last client shutdown to kill the ssh
 process.
 Set to zero to keep the tunnel open indefinitely.
 Defaults to 120.
+.It Fl v
+Produce more verbose output.
 .El
 .Sh AUTHORS
 .An -nosplit

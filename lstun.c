@@ -29,7 +29,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
+
+#include "log.h"
 
 #ifndef SSH_PATH
 #define SSH_PATH "ssh"
@@ -54,6 +57,9 @@ char		 ssh_port[16];
 struct event	 sockev[MAXSOCK];
 int		 socks[MAXSOCK];
 int		 nsock;
+
+int		 debug;
+int		 verbose;
 
 struct event	 sighupev;
 struct event	 sigintev;
@@ -90,7 +96,7 @@ chld(int fd, short event, void *data)
 	int status;
 
 	if (waitpid(ssh_pid, &status, WNOHANG) == -1)
-		err(1, "waitpid");
+		fatal("waitpid");
 
 	ssh_pid = -1;
 }
@@ -98,21 +104,21 @@ chld(int fd, short event, void *data)
 static void
 info(int fd, short event, void *data)
 {
-	warnx("connections: %d", conn);
+	log_info("connections: %d", conn);
 }
 
 static void
 spawn_ssh(void)
 {
-	warnx("spawning ssh...");
+	log_debug("spawning ssh");
 
 	switch (ssh_pid = fork()) {
 	case -1:
-		err(1, "fork");
+		fatal("fork");
 	case 0:
 		execl(SSH_PATH, "ssh", "-L", ssh_tflag, "-NTq", ssh_dest,
 		    NULL);
-		err(1, "exec");
+		fatal("exec");
 	default:
 		return;
 	}
@@ -124,7 +130,7 @@ killing_time(int fd, short event, void *data)
 	if (ssh_pid == -1)
 		return;
 
-	warnx("killing time!");
+	log_debug("timeout expired, killing ssh (%d)", ssh_pid);
 	kill(ssh_pid, SIGTERM);
 	ssh_pid = -1;
 }
@@ -156,7 +162,7 @@ errcb(struct bufferevent *bev, short event, void *d)
 {
 	struct conn *c = d;
 
-	warnx("in errcb, closing connection");
+	log_info("closing connection (event=%x)", event);
 
 	bufferevent_free(c->sourcebev);
 	bufferevent_free(c->tobev);
@@ -168,7 +174,7 @@ errcb(struct bufferevent *bev, short event, void *d)
 	c->to = -1;
 
 	if (--conn == 0) {
-		warnx("scheduling ssh termination (%llds)",
+		log_debug("scheduling ssh termination (%llds)",
 		    (long long)timeout.tv_sec);
 		if (timeout.tv_sec != 0) {
 			evtimer_set(&timeoutev, killing_time, NULL);
@@ -190,7 +196,7 @@ connect_to_ssh(void)
 
 	r = getaddrinfo(ssh_host, ssh_port, &hints, &res0);
 	if (r != 0)
-		errx(1, "getaddrinfo(\"%s\", \"%s\"): %s",
+		fatal("getaddrinfo(\"%s\", \"%s\"): %s",
 		    ssh_host, ssh_port, gai_strerror(r));
 
 	for (res = res0; res; res = res->ai_next) {
@@ -214,7 +220,7 @@ connect_to_ssh(void)
 	}
 
 	if (sock == -1)
-		warn("%s", cause);
+		log_warn("%s", cause);
 
 	freeaddrinfo(res0);
 	return sock;
@@ -233,12 +239,12 @@ try_to_connect(int fd, short event, void *d)
 	}
 
 	c->ntentative++;
-	warnx("trying to connect to %s:%s (%d/%d)", ssh_host, ssh_port,
+	log_debug("trying to connect to %s:%s (%d/%d)", ssh_host, ssh_port,
 	    c->ntentative, RETRIES);
 
 	if ((c->to = connect_to_ssh()) == -1) {
 		if (c->ntentative == RETRIES) {
-			warnx("giving up");
+			log_warnx("giving up connecting");
 			close(c->source);
 			c->source = -1;
 			return;
@@ -252,7 +258,7 @@ try_to_connect(int fd, short event, void *d)
 	c->sourcebev = bufferevent_new(c->source, sreadcb, nopcb, errcb, c);
 	c->tobev = bufferevent_new(c->to, treadcb, nopcb, errcb, c);
 	if (c->sourcebev == NULL || c->tobev == NULL)
-		err(1, "bufferevent_new");
+		fatal("bufferevent_new");
 	bufferevent_enable(c->sourcebev, EV_READ|EV_WRITE);
 	bufferevent_enable(c->tobev, EV_READ|EV_WRITE);
 }
@@ -262,16 +268,16 @@ do_accept(int fd, short event, void *data)
 {
 	int s, i;
 
-	warnx("handling connection");
+	log_debug("incoming connection");
 
 	if (evtimer_pending(&timeoutev, NULL))
 		evtimer_del(&timeoutev);
 
 	if ((s = accept(fd, NULL, 0)) == -1)
-		err(1, "accept");
+		fatal("accept");
 
 	if (conn == MAXCONN) {
-		/* oops */
+		log_warnx("dropping the connection, too many already");
 		close(s);
 		return;
 	}
@@ -322,7 +328,7 @@ bind_socket(void)
 		port = addr;
 	} else {
 		if ((c = copysec(addr, host, sizeof(host))) == NULL)
-			errx(1, "ENAMETOOLONG");
+			fatalx("name too long: %s", addr);
 
 		h = host;
 		port = c+1;
@@ -335,8 +341,7 @@ bind_socket(void)
 
 	r = getaddrinfo(h, port, &hints, &res0);
 	if (r != 0)
-		errx(1, "getaddrinfo(%s): %s",
-		    addr, gai_strerror(r));
+		fatalx("getaddrinfo(%s): %s", addr, gai_strerror(r));
 
 	for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
 		socks[nsock] = socket(res->ai_family, res->ai_socktype,
@@ -359,7 +364,7 @@ bind_socket(void)
 		nsock++;
 	}
 	if (nsock == 0)
-		err(1, "%s", cause);
+		fatal("%s", cause);
 
 	freeaddrinfo(res0);
 }
@@ -383,13 +388,13 @@ parse_tflag(void)
 	return;
 
 err:
-	errx(1, "wrong value for -B");
+	fatal("wrong value for -B");
 }
 
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: %s -B sshaddr -b addr [-t timeout]"
+	fprintf(stderr, "usage: %s [-dv] -B sshaddr -b addr [-t timeout]"
 	    " destination\n", getprogname());
 	exit(1);
 }
@@ -400,7 +405,10 @@ main(int argc, char **argv)
 	int ch, i;
 	const char *errstr;
 
-	while ((ch = getopt(argc, argv, "B:b:t:")) != -1) {
+	log_init(1, LOG_DAEMON);
+	log_setverbose(1);
+
+	while ((ch = getopt(argc, argv, "B:b:dt:v")) != -1) {
 		switch (ch) {
 		case 'B':
 			ssh_tflag = optarg;
@@ -409,10 +417,16 @@ main(int argc, char **argv)
 		case 'b':
 			addr = optarg;
 			break;
+		case 'd':
+			debug = 1;
+			break;
 		case 't':
 			timeout.tv_sec = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL)
-				errx(1, "timeout is %s: %s", errstr, optarg);
+				fatalx("timeout is %s: %s", errstr, optarg);
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		default:
 			usage();
@@ -430,6 +444,12 @@ main(int argc, char **argv)
 		conns[i].source = -1;
 		conns[i].to = -1;
 	}
+
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(verbose);
+
+	if (!debug)
+		daemon(1, 0);
 
 	bind_socket();
 
@@ -463,9 +483,9 @@ main(int argc, char **argv)
 	 * proc, exec: execute ssh on demand.
 	 */
 	if (pledge("stdio dns inet proc exec", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
-	warnx("lift off!");
+	log_info("starting");
 	event_dispatch();
 
 	if (ssh_pid != -1)
