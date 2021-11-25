@@ -35,7 +35,7 @@
 #include "log.h"
 
 #ifndef SSH_PATH
-#define SSH_PATH "ssh"
+#define SSH_PATH "/usr/bin/ssh"
 #endif
 
 #define MAXSOCK 4
