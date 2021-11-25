@@ -10,6 +10,7 @@ To compile it just run
 	$ make
 	# make install	# eventually
 
-The only dependency is libevent.
+The only dependency is libevent.  It expects ssh to be `/usr/bin/ssh`,
+compile with `-DSSH_PATH=...` to alter the path eventually.
 
 Check out the manpage for the usage.
