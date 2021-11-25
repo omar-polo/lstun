@@ -32,7 +32,7 @@
 #include <unistd.h>
 
 #ifndef SSH_PATH
-#define SSH_PATH "/usr/bin/ssh"
+#define SSH_PATH "ssh"
 #endif
 
 #define MAXSOCK 4
