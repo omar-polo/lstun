@@ -30,8 +30,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <stdint.h>
-
 #ifndef SSH_PATH
 #define SSH_PATH "/usr/bin/ssh"
 #endif
