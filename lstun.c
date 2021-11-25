@@ -62,7 +62,7 @@ struct event	 sigtermev;
 struct event	 sigchldev;
 struct event	 siginfoev;
 
-struct timeval	 timeout;
+struct timeval	 timeout = {120, 0};
 struct event	 timeoutev;
 
 pid_t		 ssh_pid = -1;
@@ -171,8 +171,10 @@ errcb(struct bufferevent *bev, short event, void *d)
 	if (--conn == 0) {
 		warnx("scheduling ssh termination (%llds)",
 		    (long long)timeout.tv_sec);
-		evtimer_set(&timeoutev, killing_time, NULL);
-		evtimer_add(&timeoutev, &timeout);
+		if (timeout.tv_sec != 0) {
+			evtimer_set(&timeoutev, killing_time, NULL);
+			evtimer_add(&timeoutev, &timeout);
+		}
 	}
 }
 
@@ -396,7 +398,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int ch, i, tout = 0;
+	int ch, i;
 	const char *errstr;
 
 	while ((ch = getopt(argc, argv, "B:b:t:")) != -1) {
@@ -409,7 +411,7 @@ main(int argc, char **argv)
 			addr = optarg;
 			break;
 		case 't':
-			tout = strtonum(optarg, 1, INT_MAX, &errstr);
+			timeout.tv_sec = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "timeout is %s: %s", errstr, optarg);
 			break;
@@ -422,12 +424,6 @@ main(int argc, char **argv)
 
 	if (argc != 1 || addr == NULL || ssh_tflag == NULL)
 		usage();
-
-	if (tout == 0)
-		tout = 120;
-
-	timeout.tv_sec = tout;
-	timeout.tv_usec = 0;
 
 	ssh_dest = argv[0];
 
