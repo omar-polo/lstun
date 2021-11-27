@@ -474,7 +474,11 @@ main(int argc, char **argv)
 	signal_set(&sigintev, SIGINT, terminate, NULL);
 	signal_set(&sigtermev, SIGTERM, terminate, NULL);
 	signal_set(&sigchldev, SIGCHLD, chld, NULL);
+#ifdef SIGINFO
 	signal_set(&siginfoev, SIGINFO, info, NULL);
+#else
+	signal_set(&siginfoev, SIGUSR1, info, NULL);
+#endif
 
 	signal_add(&sighupev, NULL);
 	signal_add(&sigintev, NULL);
