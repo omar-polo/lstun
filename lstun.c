@@ -67,7 +67,7 @@ struct event	 sigtermev;
 struct event	 sigchldev;
 struct event	 siginfoev;
 
-struct timeval	 timeout = {120, 0};
+struct timeval	 timeout = {600, 0}; /* 10 minutes */
 struct event	 timeoutev;
 
 pid_t		 ssh_pid = -1;
