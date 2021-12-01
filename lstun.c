@@ -239,7 +239,7 @@ try_to_connect(int fd, short event, void *d)
 	}
 
 	c->ntentative++;
-	log_debug("trying to connect to %s:%s (%d/%d)", ssh_host, ssh_port,
+	log_info("trying to connect to %s:%s (%d/%d)", ssh_host, ssh_port,
 	    c->ntentative, RETRIES);
 
 	if ((c->to = connect_to_ssh()) == -1) {
