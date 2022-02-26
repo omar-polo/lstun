@@ -1,6 +1,0 @@
-bin_PROGRAMS =	lstun
-lstun_SOURCES =	lstun.c compat.h log.c log.h
-
-LDADD =		$(LIBOBJS)
-
-dist_man1_MANS = lstun.1
