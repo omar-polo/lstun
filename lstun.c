@@ -394,7 +394,7 @@ bind_socket(void)
 }
 
 static void
-parse_tflag(void)
+parse_sshaddr(void)
 {
 	const char *c;
 
@@ -453,7 +453,7 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'B':
 			ssh_tflag = optarg;
-			parse_tflag();
+			parse_sshaddr();
 			break;
 		case 'b':
 			addr = optarg;
