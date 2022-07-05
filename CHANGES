@@ -1,0 +1,10 @@
+* lstun 0.2; 2022-07-05
+
+- bump retries to 16
+- clarify the manpage
+- cast argument to ctype' is*() to unsigned char
+- allow unlimited number of incoming connections
+- don't die for OOM
+- bind sockets early
+- log when the connection succeeds
+- log before quitting
