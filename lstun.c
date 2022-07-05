@@ -83,26 +83,28 @@ struct conn {
 } conns[MAXCONN];
 
 static void
-terminate(int fd, short event, void *data)
-{
-	event_loopbreak();
-}
-
-static void
-chld(int fd, short event, void *data)
+sig_handler(int sig, short event, void *data)
 {
 	int status;
 
-	if (waitpid(ssh_pid, &status, WNOHANG) == -1)
-		fatal("waitpid");
-
-	ssh_pid = -1;
-}
-
-static void
-info(int fd, short event, void *data)
-{
-	log_info("connections: %d", conn);
+	switch (sig) {
+	case SIGHUP:
+	case SIGINT:
+	case SIGTERM:
+		event_loopbreak();
+		break;
+	case SIGCHLD:
+		if (waitpid(ssh_pid, &status, WNOHANG) == -1)
+			fatal("waitpid");
+		ssh_pid = -1;
+		break;
+#ifdef SIGINFO
+	case SIGINFO:
+#else
+	case SIGUSR1:
+#endif
+		log_info("connections: %d", conn);
+	}
 }
 
 static void
@@ -468,14 +470,14 @@ main(int argc, char **argv)
 	/* initialize the timer */
 	evtimer_set(&timeoutev, killing_time, NULL);
 
-	signal_set(&sighupev, SIGHUP, terminate, NULL);
-	signal_set(&sigintev, SIGINT, terminate, NULL);
-	signal_set(&sigtermev, SIGTERM, terminate, NULL);
-	signal_set(&sigchldev, SIGCHLD, chld, NULL);
+	signal_set(&sighupev, SIGHUP, sig_handler, NULL);
+	signal_set(&sigintev, SIGINT, sig_handler, NULL);
+	signal_set(&sigtermev, SIGTERM, sig_handler, NULL);
+	signal_set(&sigchldev, SIGCHLD, sig_handler, NULL);
 #ifdef SIGINFO
-	signal_set(&siginfoev, SIGINFO, info, NULL);
+	signal_set(&siginfoev, SIGINFO, sig_handler, NULL);
 #else
-	signal_set(&siginfoev, SIGUSR1, info, NULL);
+	signal_set(&siginfoev, SIGUSR1, sig_handler, NULL);
 #endif
 
 	signal_add(&sighupev, NULL);
