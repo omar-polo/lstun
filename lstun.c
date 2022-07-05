@@ -37,7 +37,7 @@
 #endif
 
 #define MAXSOCK 32
-#define MAXCONN 16
+#define MAXCONN 64
 #define BACKOFF 1
 #define RETRIES 16
 
