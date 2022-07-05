@@ -15,12 +15,14 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
 #include <signal.h>
@@ -420,8 +422,25 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int ch, i;
+	int ch, i, fd;
 	const char *errstr;
+	struct stat sb;
+
+	/*
+	 * Ensure we have fds 0-2 open so that we have no issue with
+	 * calling bind_socket before daemon(3).
+	 */
+	for (i = 0; i < 3; ++i) {
+		if (fstat(i, &sb) == -1) {
+			if ((fd = open("/dev/null", O_RDWR)) != -1) {
+				if (dup2(fd, i) == -1)
+					exit(1);
+				if (fd > i)
+					close(fd);
+			} else
+				exit(1);
+		}
+	}
 
 	log_init(1, LOG_DAEMON);
 	log_setverbose(1);
@@ -458,13 +477,13 @@ main(int argc, char **argv)
 
 	ssh_dest = argv[0];
 
+	bind_socket();
+
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
 
 	if (!debug)
 		daemon(1, 0);
-
-	bind_socket();
 
 	signal(SIGPIPE, SIG_IGN);
 
