@@ -92,6 +92,7 @@ sig_handler(int sig, short event, void *data)
 	case SIGHUP:
 	case SIGINT:
 	case SIGTERM:
+		log_info("quitting");
 		event_loopbreak();
 		break;
 	case SIGCHLD:
