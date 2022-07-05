@@ -37,7 +37,6 @@
 #endif
 
 #define MAXSOCK 32
-#define MAXCONN 64
 #define BACKOFF 1
 #define RETRIES 16
 
@@ -80,7 +79,7 @@ struct conn {
 	struct bufferevent	*sourcebev;
 	int			 to;
 	struct bufferevent	*tobev;
-} conns[MAXCONN];
+};
 
 static void
 sig_handler(int sig, short event, void *data)
@@ -170,8 +169,7 @@ errcb(struct bufferevent *bev, short event, void *d)
 	close(c->source);
 	close(c->to);
 
-	c->source = -1;
-	c->to = -1;
+	free(c);
 
 	if (--conn == 0) {
 		log_debug("scheduling ssh termination (%llds)",
@@ -266,7 +264,8 @@ try_to_connect(int fd, short event, void *d)
 static void
 do_accept(int fd, short event, void *data)
 {
-	int s, i;
+	struct conn *c;
+	int s;
 
 	log_debug("incoming connection");
 
@@ -276,29 +275,21 @@ do_accept(int fd, short event, void *data)
 	if ((s = accept(fd, NULL, 0)) == -1)
 		fatal("accept");
 
-	if (conn == MAXCONN) {
-		log_warnx("dropping the connection, too many already");
-		close(s);
-		return;
-	}
-
 	conn++;
 
 	if (ssh_pid == -1)
 		spawn_ssh();
 
-	for (i = 0; i < MAXCONN; ++i) {
-		if (conns[i].source != -1)
-			continue;
-
-		conns[i].source = s;
-		conns[i].ntentative = 0;
-		conns[i].retry.tv_sec = BACKOFF;
-		conns[i].retry.tv_usec = 0;
-		evtimer_set(&conns[i].waitev, try_to_connect, &conns[i]);
-		evtimer_add(&conns[i].waitev, &conns[i].retry);
-		break;
+	if ((c = calloc(1, sizeof(*c))) == NULL) {
+		log_warn("calloc");
+		close(s);
+		return;
 	}
+
+	c->source = s;
+	c->retry.tv_sec = BACKOFF;
+	evtimer_set(&c->waitev, try_to_connect, c);
+	evtimer_add(&c->waitev, &c->retry);
 }
 
 static const char *
@@ -449,11 +440,6 @@ main(int argc, char **argv)
 		usage();
 
 	ssh_dest = argv[0];
-
-	for (i = 0; i < MAXCONN; ++i) {
-		conns[i].source = -1;
-		conns[i].to = -1;
-	}
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
