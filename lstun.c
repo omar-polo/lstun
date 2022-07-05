@@ -39,7 +39,7 @@
 #define MAXSOCK 32
 #define MAXCONN 16
 #define BACKOFF 1
-#define RETRIES 8
+#define RETRIES 16
 
 #ifndef __OpenBSD__
 #define pledge(p, e) 0
