@@ -124,6 +124,23 @@ spawn_ssh(void)
 }
 
 static void
+conn_free(struct conn *c)
+{
+	if (c->sourcebev != NULL)
+		bufferevent_free(c->sourcebev);
+	if (c->tobev != NULL)
+		bufferevent_free(c->tobev);
+
+	if (evtimer_pending(&c->waitev, NULL))
+		evtimer_del(&c->waitev);
+
+	close(c->source);
+	close(c->to);
+
+	free(c);
+}
+
+static void
 killing_time(int fd, short event, void *data)
 {
 	if (ssh_pid == -1)
@@ -163,13 +180,7 @@ errcb(struct bufferevent *bev, short event, void *d)
 
 	log_info("closing connection (event=%x)", event);
 
-	bufferevent_free(c->sourcebev);
-	bufferevent_free(c->tobev);
-
-	close(c->source);
-	close(c->to);
-
-	free(c);
+	conn_free(c);
 
 	if (--conn == 0) {
 		log_debug("scheduling ssh termination (%llds)",
@@ -193,9 +204,11 @@ connect_to_ssh(void)
 	hints.ai_socktype = SOCK_STREAM;
 
 	r = getaddrinfo(ssh_host, ssh_port, &hints, &res0);
-	if (r != 0)
-		fatal("getaddrinfo(\"%s\", \"%s\"): %s",
+	if (r != 0) {
+		log_warnx("getaddrinfo(\"%s\", \"%s\"): %s",
 		    ssh_host, ssh_port, gai_strerror(r));
+		return -1;
+	}
 
 	for (res = res0; res; res = res->ai_next) {
 		sock = socket(res->ai_family, res->ai_socktype,
@@ -255,8 +268,12 @@ try_to_connect(int fd, short event, void *d)
 
 	c->sourcebev = bufferevent_new(c->source, sreadcb, nopcb, errcb, c);
 	c->tobev = bufferevent_new(c->to, treadcb, nopcb, errcb, c);
-	if (c->sourcebev == NULL || c->tobev == NULL)
-		fatal("bufferevent_new");
+	if (c->sourcebev == NULL || c->tobev == NULL) {
+		log_warn("bufferevent_new");
+		conn_free(c);
+		return;
+	}
+
 	bufferevent_enable(c->sourcebev, EV_READ|EV_WRITE);
 	bufferevent_enable(c->tobev, EV_READ|EV_WRITE);
 }
