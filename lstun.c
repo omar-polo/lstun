@@ -384,7 +384,7 @@ parse_tflag(void)
 {
 	const char *c;
 
-	if (isdigit(*ssh_tflag)) {
+	if (isdigit((unsigned char)*ssh_tflag)) {
 		strlcpy(ssh_host, "localhost", sizeof(ssh_host));
 		if (copysec(ssh_tflag, ssh_port, sizeof(ssh_port)) == NULL)
 			goto err;
