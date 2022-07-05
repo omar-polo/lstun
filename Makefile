@@ -23,8 +23,7 @@ BINGRP != id -g -n
 DEBUG = -O0 -g
 .endif
 
-release:
-	clean
+release: clean
 	sed -i -e 's/_RELEASE=No/_RELEASE=Yes/' lstun-version.mk
 	${MAKE} dist
 	sed -i -e 's/_RELEASE=No/_RELEASE=No/' lstun-version.mk
