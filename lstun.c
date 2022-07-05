@@ -268,6 +268,8 @@ try_to_connect(int fd, short event, void *d)
 		return;
 	}
 
+	log_info("connected!");
+
 	c->sourcebev = bufferevent_new(c->source, sreadcb, nopcb, errcb, c);
 	c->tobev = bufferevent_new(c->to, treadcb, nopcb, errcb, c);
 	if (c->sourcebev == NULL || c->tobev == NULL) {
