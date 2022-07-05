@@ -137,7 +137,8 @@ conn_free(struct conn *c)
 		evtimer_del(&c->waitev);
 
 	close(c->source);
-	close(c->to);
+	if (c->to != -1)
+		close(c->to);
 
 	free(c);
 }
@@ -308,6 +309,7 @@ do_accept(int fd, short event, void *data)
 	}
 
 	c->source = s;
+	c->to = -1;
 	c->retry.tv_sec = BACKOFF;
 	evtimer_set(&c->waitev, try_to_connect, c);
 	evtimer_add(&c->waitev, &c->retry);
