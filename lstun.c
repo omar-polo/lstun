@@ -415,7 +415,7 @@ parse_sshaddr(void)
 	return;
 
 err:
-	fatal("wrong value for -B");
+	fatalx("wrong value for -B");
 }
 
 static void __dead
