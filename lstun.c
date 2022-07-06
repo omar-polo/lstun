@@ -291,15 +291,10 @@ do_accept(int fd, short event, void *data)
 
 	log_debug("incoming connection");
 
-	if (evtimer_pending(&timeoutev, NULL))
-		evtimer_del(&timeoutev);
-
 	if ((s = accept(fd, NULL, 0)) == -1) {
 		log_warn("accept");
 		return;
 	}
-
-	conn++;
 
 	if (ssh_pid == -1 && spawn_ssh() == -1) {
 		close(s);
@@ -311,6 +306,10 @@ do_accept(int fd, short event, void *data)
 		close(s);
 		return;
 	}
+
+	conn++;
+	if (evtimer_pending(&timeoutev, NULL))
+		evtimer_del(&timeoutev);
 
 	c->source = s;
 	c->to = -1;
