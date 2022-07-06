@@ -1,3 +1,12 @@
+* lstun 0.3; 2022-07-06
+
+- don't die if fork(2) or accept(2) fail
+- plug memory leak in try_to_connect
+- fix accounting of inflight connections and timeouts
+- fix -B error reporting
+- unveil only ssh(1)
+
+
 * lstun 0.2; 2022-07-05
 
 - bump retries to 16
