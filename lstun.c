@@ -44,6 +44,7 @@
 
 #ifndef __OpenBSD__
 #define pledge(p, e) 0
+#define unveil(p, m) 0
 #endif
 
 const char	*addr;		/* our addr */
@@ -520,6 +521,9 @@ main(int argc, char **argv)
 		    do_accept, NULL);
 		event_add(&sockev[i], NULL);
 	}
+
+	if (unveil(SSH_PATH, "x") == -1)
+		fatal("unveil(%s)", SSH_PATH);
 
 	/*
 	 * dns, inet: bind the socket and connect to the childs.
