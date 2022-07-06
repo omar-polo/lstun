@@ -247,10 +247,9 @@ try_to_connect(int fd, short event, void *d)
 {
 	struct conn *c = d;
 
-	/* ssh may die in the meantime */
+	/* ssh may have died in the meantime */
 	if (ssh_pid == -1) {
-		close(c->source);
-		c->source = -1;
+		conn_free(c);
 		return;
 	}
 
@@ -261,8 +260,7 @@ try_to_connect(int fd, short event, void *d)
 	if ((c->to = connect_to_ssh()) == -1) {
 		if (c->ntentative == RETRIES) {
 			log_warnx("giving up connecting");
-			close(c->source);
-			c->source = -1;
+			conn_free(c);
 			return;
 		}
 
