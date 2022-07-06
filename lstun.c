@@ -109,20 +109,21 @@ sig_handler(int sig, short event, void *data)
 	}
 }
 
-static void
+static int
 spawn_ssh(void)
 {
 	log_debug("spawning ssh");
 
 	switch (ssh_pid = fork()) {
 	case -1:
-		fatal("fork");
+		log_warnx("fork");
+		return -1;
 	case 0:
 		execl(SSH_PATH, "ssh", "-L", ssh_tflag, "-NTq", ssh_dest,
 		    NULL);
 		fatal("exec");
 	default:
-		return;
+		return 0;
 	}
 }
 
@@ -300,8 +301,10 @@ do_accept(int fd, short event, void *data)
 
 	conn++;
 
-	if (ssh_pid == -1)
-		spawn_ssh();
+	if (ssh_pid == -1 && spawn_ssh() == -1) {
+		close(s);
+		return;
+	}
 
 	if ((c = calloc(1, sizeof(*c))) == NULL) {
 		log_warn("calloc");
