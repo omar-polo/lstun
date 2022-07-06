@@ -294,8 +294,10 @@ do_accept(int fd, short event, void *data)
 	if (evtimer_pending(&timeoutev, NULL))
 		evtimer_del(&timeoutev);
 
-	if ((s = accept(fd, NULL, 0)) == -1)
-		fatal("accept");
+	if ((s = accept(fd, NULL, 0)) == -1) {
+		log_warn("accept");
+		return;
+	}
 
 	conn++;
 
