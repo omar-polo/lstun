@@ -1,4 +1,4 @@
-.\" Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+.\" Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -11,7 +11,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: November 23 2021$
+.Dd $Mdocdate: July 6 2022$
 .Dt LSTUN 1
 .Os
 .Sh NAME
@@ -85,6 +85,8 @@ listens on 2525 and forwards the traffic
 .Bd -literal -offset indent
 $ lstun -B 2526:localhost:25 -b 2525 example.com
 .Ed
+.Sh SEE ALSO
+.Xr ssh 1
 .Sh AUTHORS
 .An -nosplit
 The
