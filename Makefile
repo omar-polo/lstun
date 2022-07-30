@@ -8,7 +8,8 @@ HEADERS =	log.h
 
 SOURCES =	compats.c \
 		log.c \
-		lstun.c
+		lstun.c \
+		tests.c
 
 OBJS =		${SOURCES:.c=.o}
 
