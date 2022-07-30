@@ -39,11 +39,6 @@
 #define BACKOFF 1
 #define RETRIES 16
 
-#ifndef __OpenBSD__
-#define pledge(p, e) 0
-#define unveil(p, m) 0
-#endif
-
 const char	*addr;		/* our addr */
 const char	*ssh_tflag;
 const char	*ssh_dest;
