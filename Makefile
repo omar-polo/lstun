@@ -77,5 +77,8 @@ ${DISTNAME}.tar.gz: ${DISTFILES}
 # these .d files are produced during the first build if the compiler
 # supports it.
 
+-include compats.d
 -include log.d
 -include lstun.d
+-include splice.d
+-include splice_bev.d
