@@ -1,6 +1,6 @@
 .PHONY: all clean distclean install
 
-VERSION =	0.4
+VERSION =	0.5
 PROG =		lstun
 DISTNAME =	${PROG}-${VERSION}
 
