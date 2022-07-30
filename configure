@@ -71,7 +71,7 @@ Variables available:
     SHAREDIR               where to install misc files (PREFIX/share)
     SBINDIR                where to install system executables (PREFIX/sbin)
     INCLUDEDIR             where to install header files (PREFIX/include)
-    PKG_CONFIG             path to the pkg-config program or empty to disable
+    PKG_CONFIG             path to the pkg-config program or \`false'
 
 Additionally, the following environment variables are used if set:
 
@@ -168,15 +168,6 @@ command -v ${CC} 2>/dev/null 1>&2 || {
 	}
 }
 
-command -v pkg-config 2>/dev/null 1>&2 && {
-	PKG_CONFIG=pkg-config
-	echo "pkg-config found" 1>&2
-	echo "pkg-config found" 1>&3
-} || {
-	echo "pkg-config not found" 1>&2
-	echo "pkg-config not found" 1>&3
-}
-
 #----------------------------------------------------------------------
 # Allow certain variables to be overriden on the command line.
 #----------------------------------------------------------------------
@@ -240,6 +231,17 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
+test -z "${PKG_CONFIG}" && {
+	command -v pkg-config 2>/dev/null >&2 && {
+		PKG_CONFIG="$(command -v pkg-config)"
+		echo "found pkg-config: $PKG_CONFIG" 1>&2
+		echo "found pkg-config: $PKG_CONFIG" 1>&3
+	} || {
+		PKG_CONFIG=false
+		echo "pkg-config not found" 1>&2
+		echo "pkg-config not found" 1>&3
+	}
+}
 
 #----------------------------------------------------------------------
 # These are the values that will be pushed into config.h after we test
@@ -329,7 +331,7 @@ EOF
 				echo "${1}: ${CC} succeeded" 1>&3
 				extralib="(with ${5})"
 			else
-				test -n "${PKG_CONFIG}" -a -n "${6}" && ${PKG_CONFIG} "$6"
+				test -n "${6}" && ${PKG_CONFIG} "$6"
 				if [ $? -eq 0 ]; then
 					echo "${1}: ${CC} failed with $? (retrying)" 1>&3
 					pkgcfs=$($PKG_CONFIG --cflags "${6}")

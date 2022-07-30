@@ -37,9 +37,9 @@ LDADD_LIBEVENT2="-L/opt/lib/ -levent_extra -levent_core"
 LDADD_LIB_SOCKET=
 
 # To disable the autoconfiguration via pkg-config set PKG_CONFIG to
-# `false' or to the empty string:
+# `false':
 
-PKG_CONFIG=
+PKG_CONFIG=false
 
 # It is possible to change the utility program used for installation
 # and the modes files are installed with.  The defaults are:
