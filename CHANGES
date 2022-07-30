@@ -1,3 +1,8 @@
+* lstun 0.4; 2022-07-26
+
+- use (a modified version of) kristaps' oconfigure
+- implement socket splicing on OpenBSD
+
 * lstun 0.3; 2022-07-06
 
 - don't die if fork(2) or accept(2) fail
