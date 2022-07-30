@@ -275,6 +275,7 @@ HAVE_LIBEVENT2=0		# may not be checked
 HAVE_PLEDGE=
 HAVE_PROGRAM_INVOCATION_SHORT_NAME=
 HAVE_PR_SET_NAME=
+HAVE_SO_SPLICE=
 HAVE_STRLCAT=
 HAVE_STRLCPY=
 HAVE_STRTONUM=
@@ -445,6 +446,7 @@ runtest lib_socket	LIB_SOCKET "" "" "-lsocket -lnsl" || true
 runtest pledge		PLEDGE				  || true
 runtest program_invocation_short_name	PROGRAM_INVOCATION_SHORT_NAME || true
 runtest PR_SET_NAME	PR_SET_NAME			  || true
+runtest SO_SPLICE	SO_SPLICE			  || true
 runtest static		STATIC "" "-static"		  || true
 runtest strlcat		STRLCAT				  || true
 runtest strlcpy		STRLCPY				  || true
@@ -559,6 +561,7 @@ cat <<EOF
 #define HAVE_PLEDGE ${HAVE_PLEDGE}
 #define HAVE_PROGRAM_INVOCATION_SHORT_NAME ${HAVE_PROGRAM_INVOCATION_SHORT_NAME}
 #define HAVE_PR_SET_NAME ${HAVE_PR_SET_NAME}
+#define HAVE_SO_SPLICE ${HAVE_SO_SPLICE}
 #define HAVE_STRLCAT ${HAVE_STRLCAT}
 #define HAVE_STRLCPY ${HAVE_STRLCPY}
 #define HAVE_STRTONUM ${HAVE_STRTONUM}

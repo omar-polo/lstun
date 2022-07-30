@@ -4,11 +4,14 @@ VERSION =	0.4
 PROG =		lstun
 DISTNAME =	${PROG}-${VERSION}
 
-HEADERS =	log.h
+HEADERS =	log.h \
+		lstun.h
 
 SOURCES =	compats.c \
 		log.c \
 		lstun.c \
+		splice.c \
+		splice_bev.c \
 		tests.c
 
 OBJS =		${SOURCES:.c=.o}

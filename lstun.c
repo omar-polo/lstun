@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "log.h"
+#include "lstun.h"
 
 #define MAXSOCK 32
 #define BACKOFF 1
@@ -65,16 +66,6 @@ struct event	 timeoutev;
 pid_t		 ssh_pid = -1;
 
 int		 conn;
-
-struct conn {
-	int			 ntentative;
-	struct timeval		 retry;
-	struct event		 waitev;
-	int			 source;
-	struct bufferevent	*sourcebev;
-	int			 to;
-	struct bufferevent	*tobev;
-};
 
 static void
 sig_handler(int sig, short event, void *data)
@@ -121,6 +112,17 @@ spawn_ssh(void)
 }
 
 static void
+killing_time(int fd, short event, void *data)
+{
+	if (ssh_pid == -1)
+		return;
+
+	log_debug("timeout expired, killing ssh (%d)", ssh_pid);
+	kill(ssh_pid, SIGTERM);
+	ssh_pid = -1;
+}
+
+void
 conn_free(struct conn *c)
 {
 	if (c->sourcebev != NULL)
@@ -136,49 +138,6 @@ conn_free(struct conn *c)
 		close(c->to);
 
 	free(c);
-}
-
-static void
-killing_time(int fd, short event, void *data)
-{
-	if (ssh_pid == -1)
-		return;
-
-	log_debug("timeout expired, killing ssh (%d)", ssh_pid);
-	kill(ssh_pid, SIGTERM);
-	ssh_pid = -1;
-}
-
-static void
-nopcb(struct bufferevent *bev, void *d)
-{
-	return;
-}
-
-static void
-sreadcb(struct bufferevent *bev, void *d)
-{
-	struct conn *c = d;
-
-	bufferevent_write_buffer(c->tobev, EVBUFFER_INPUT(bev));
-}
-
-static void
-treadcb(struct bufferevent *bev, void *d)
-{
-	struct conn *c = d;
-
-	bufferevent_write_buffer(c->sourcebev, EVBUFFER_INPUT(bev));
-}
-
-static void
-errcb(struct bufferevent *bev, short event, void *d)
-{
-	struct conn *c = d;
-
-	log_info("closing connection (event=%x)", event);
-
-	conn_free(c);
 
 	if (--conn == 0) {
 		log_debug("scheduling ssh termination (%llds)",
@@ -264,16 +223,8 @@ try_to_connect(int fd, short event, void *d)
 
 	log_info("connected!");
 
-	c->sourcebev = bufferevent_new(c->source, sreadcb, nopcb, errcb, c);
-	c->tobev = bufferevent_new(c->to, treadcb, nopcb, errcb, c);
-	if (c->sourcebev == NULL || c->tobev == NULL) {
-		log_warn("bufferevent_new");
+	if (conn_splice(c) == -1)
 		conn_free(c);
-		return;
-	}
-
-	bufferevent_enable(c->sourcebev, EV_READ|EV_WRITE);
-	bufferevent_enable(c->tobev, EV_READ|EV_WRITE);
 }
 
 static void

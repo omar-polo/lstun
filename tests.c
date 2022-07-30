@@ -99,6 +99,22 @@ main(void)
 	return 0;
 }
 #endif /* TEST_PR_SET_NAME */
+#if TEST_SO_SPLICE
+#include <sys/socket.h>
+
+int
+main(void)
+{
+	int src = 0, dst = 1;
+
+	/*
+	 * invalid usage, i'm only interested in checking if it
+	 * compiles
+	 */
+	setsockopt(src, SOL_SOCKET, SO_SPLICE, &dst, sizeof(int));
+	return 0;
+}
+#endif /* TEST_SO_SPLICE */
 #if TEST_STATIC
 int
 main(void)
