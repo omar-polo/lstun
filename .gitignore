@@ -1,4 +1,10 @@
-*.o
-*.d
+Makefile.configure
+lstun
+config.h
+config.h.old
+config.log
+config.log.old
+**/*.o
+**/*.d
 **/obj
-**/lstun
+**/tags

@@ -1,44 +1,77 @@
+.PHONY: all clean distclean install
+
+VERSION =	0.4
 PROG =		lstun
-SRCS =		lstun.c log.c
+DISTNAME =	${PROG}-${VERSION}
 
-LDADD =		-levent
-DPADD =		${LIBEVENT}
+HEADERS =	log.h
 
-WARNINGS =	yes
+SOURCES =	compats.c \
+		log.c \
+		lstun.c
 
-.include "lstun-version.mk"
+OBJS =		${SOURCES:.c=.o}
 
-.if "${LSTUN_RELEASE}" == "Yes"
-PREFIX ?= /usr/local
-BINDIR ?= ${PREFIX}/bin
-MANDIR ?= ${PREFIX}/man/man
-.else
-NOMAN = Yes
-PREFIX ?= ${HOME}
-BINDIR ?= ${PREFIX}/bin
-BINOWN ?= ${USER}
-.if !defined(BINGRP)
-BINGRP != id -g -n
-.endif
-DEBUG = -O0 -g
-.endif
+DISTFILES =	CHANGES \
+		LICENSE \
+		Makefile \
+		README.md \
+		configure \
+		lstun.1 \
+		${HEADERS} \
+		${SOURCES}
 
-release: clean
-	sed -i -e 's/_RELEASE=No/_RELEASE=Yes/' lstun-version.mk
-	${MAKE} dist
-	sed -i -e 's/_RELEASE=No/_RELEASE=No/' lstun-version.mk
+all: ${PROG}
 
-dist: clean
-	mkdir /tmp/lstun-${LSTUN_VERSION}
-	pax -rw * /tmp/lstun-${LSTUN_VERSION}
-	find /tmp/lstun-${LSTUN_VERSION} -type d -name obj -delete
-	rm /tmp/lstun-${LSTUN_VERSION}/lstun-dist.txt
-	tar -C /tmp -zcf lstun-${LSTUN_VERSION}.tar.gz lstun-${LSTUN_VERSION}
-	rm -rf /tmp/lstun-${LSTUN_VERSION}/
-	tar -ztf lstun-${LSTUN_VERSION}.tar.gz | \
-		sed -e 's/^lstun-${LSTUN_VERSION}//' | \
-		sort > lstun-dist.txt.new
-	diff -u lstun-dist.txt lstun-dist.txt.new
-	rm lstun-dist.txt.new
+Makefile.configure config.h: configure tests.c
+	@echo "$@ is out of date; please run ./configure"
+	@exit 1
 
-.include <bsd.prog.mk>
+include Makefile.configure
+
+# -- targets --
+
+${PROG}: ${OBJS}
+	${CC} -o $@ ${OBJS} ${LDFLAGS} ${LDADD}
+
+clean:
+	rm -f ${OBJS} ${OBJS:.o=.d} ${PROG}
+
+distclean: clean
+	rm -f Makefile.configure config.h config.h.old config.log config.log.old
+
+install: ${PROG}
+	mkdir -p ${DESTDIR}${BINDIR}
+	mkdir -p ${DESTDIR}${MANDIR}/man1
+	${INSTALL_PROGRAM} ${PROG} ${DESTDIR}${BINDIR}
+	${INSTALL_MAN} lstun.1 ${DESTDIR}${MANDIR}/man1/${PROG.1}
+
+install-local: ${PROG}
+	mkdir -p ${HOME}/bin
+	${INSTALL_PROGRAM} ${PROG} ${HOME}/bin
+
+uninstall:
+	rm ${DESTDIR}${BINDIR}/${PROG}
+	rm ${DESTDIR}${MANDIR}/man1/${PROG}.1
+
+# --- maintainer targets ---
+
+dist: ${DISTNAME}.sha256
+
+${DISTNAME}.sha256: ${DISTNAME}.tar.gz
+	sha256 ${DISTNAME}.tar.gz > $@
+
+${DISTNAME}.tar.gz: ${DISTFILES}
+	mkdir -p .dist/${DISTNAME}
+	${INSTALL} -m 0644 ${DISTFILES} .dist/${DISTNAME}
+	chmod 755 .dist/${DISTNAME}/configure
+	cd .dist && tar zcf ../$@ ${DISTNAME}
+	rm -rf .dist
+
+# -- dependency management ---
+
+# these .d files are produced during the first build if the compiler
+# supports it.
+
+-include log.d
+-include lstun.d
