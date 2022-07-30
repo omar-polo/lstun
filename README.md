@@ -3,8 +3,7 @@
 lstun is a simple utility to lazily (on demand) spawn a ssh tunnel to
 a remote machine and optionally kill it after some time of inactivity.
 
-The only dependency is libevent.  It expects ssh to be `/usr/bin/ssh`,
-compile with `-DSSH_PATH=...` to alter the path eventually.
+The only dependency is libevent and openssh.
 
 To compile it just run
 
