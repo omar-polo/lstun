@@ -57,6 +57,7 @@ The options are as follows:
 
 Variables available:
 
+    SSH_PROG               absolute path to the ssh(1) binary
     LDADD                  generic linker flags
     LDADD_LIBEVENT         linker flags for libevent
     LDADD_LIBEVENT2        linker flags for libevent2
@@ -147,6 +148,7 @@ INSTALL_LIB=
 INSTALL_MAN=
 INSTALL_DATA=
 PKG_CONFIG=
+SSH_PROG=
 
 # SunOS sets "cc", but this doesn't exist.
 # It does have gcc, so try that instead.
@@ -225,6 +227,8 @@ while [ $# -gt 0 ]; do
 		INCLUDEDIR="$val" ;;
 	PKG_CONFIG)
 		PKG_CONFIG="$val" ;;
+	SSH_PROG)
+		SSH_PROG="$val" ;;
 	*)
 		echo "$0: invalid key: $key" 1>&2
 		exit 1
@@ -242,6 +246,19 @@ test -z "${PKG_CONFIG}" && {
 		echo "pkg-config not found" 1>&3
 	}
 }
+
+test -z "${SSH_PROG}" && {
+	command -v ssh 2>/dev/null 1>&2 && {
+		SSH_PROG="$(command -v ssh)"
+		echo "found ssh: $SSH_PROG" 1>&2
+		echo "found ssh: $SSH_PROG" 1>&3
+	} || {
+		echo "ssh not found: giving up" >&2
+		echo "ssh not found: giving up" >&3
+		exit 1
+	}
+}
+
 
 #----------------------------------------------------------------------
 # These are the values that will be pushed into config.h after we test
@@ -569,6 +586,8 @@ extern long long strtonum(const char *, long long, long long, const char **);
 #ifndef __dead
 # define __dead __attribute__((noreturn))
 #endif
+
+#define SSH_PROG "${SSH_PROG}"
 
 #endif /*!OCONFIGURE_CONFIG_H*/
 EOF

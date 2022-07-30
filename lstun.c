@@ -35,10 +35,6 @@
 
 #include "log.h"
 
-#ifndef SSH_PATH
-#define SSH_PATH "/usr/bin/ssh"
-#endif
-
 #define MAXSOCK 32
 #define BACKOFF 1
 #define RETRIES 16
@@ -121,7 +117,7 @@ spawn_ssh(void)
 		log_warnx("fork");
 		return -1;
 	case 0:
-		execl(SSH_PATH, "ssh", "-L", ssh_tflag, "-NTq", ssh_dest,
+		execl(SSH_PROG, "ssh", "-L", ssh_tflag, "-NTq", ssh_dest,
 		    NULL);
 		fatal("exec");
 	default:
@@ -523,8 +519,8 @@ main(int argc, char **argv)
 		event_add(&sockev[i], NULL);
 	}
 
-	if (unveil(SSH_PATH, "x") == -1)
-		fatal("unveil(%s)", SSH_PATH);
+	if (unveil(SSH_PROG, "x") == -1)
+		fatal("unveil(%s)", SSH_PROG);
 
 	/*
 	 * dns, inet: bind the socket and connect to the childs.
