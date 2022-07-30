@@ -271,7 +271,7 @@ test -z "${SSH_PROG}" && {
 HAVE_GETEXECNAME=
 HAVE_GETPROGNAME=
 HAVE_LIBEVENT=
-HAVE_LIBEVENT2=0		# may not be checked
+HAVE_LIBEVENT2=
 HAVE_PLEDGE=
 HAVE_PROGRAM_INVOCATION_SHORT_NAME=
 HAVE_PR_SET_NAME=
@@ -454,7 +454,7 @@ runtest strtonum	STRTONUM			  || true
 runtest unveil		UNVEIL				  || true
 runtest __progname	__PROGNAME			  || true
 
-if [ "${HAVE_LIBEVENT}" -eq 0 -a "${HAVE_LIBEVENT2}" -eq 0 ]; then
+if [ "${HAVE_LIBEVENT}" -eq 0 -a "${HAVE_LIBEVENT2:-0}" -eq 0 ]; then
 	echo "Fatal: missing libevent" 1>&2
 	echo "Fatal: missing libevent" 1>&3
 	exit 1
@@ -529,7 +529,7 @@ if [ ${HAVE_PLEDGE} -eq 0 -o ${HAVE_UNVEIL} -eq 0 ]; then
 	echo
 fi
 
-if [ ${HAVE_LIBEVENT2} -eq 1 ]; then
+if [ ${HAVE_LIBEVENT2:-0} -eq 1 ]; then
 	cat <<EOF
 #include <event2/event.h>
 #include <event2/event_compat.h>
@@ -574,6 +574,10 @@ cat <<EOF
 extern const char *getprogname(void);
 #endif
 
+#if !HAVE_PLEDGE
+# define pledge(a, b) (0)
+#endif
+
 #if !HAVE_STRLCAT
 extern size_t strlcat(char *, const char *, size_t);
 #endif
@@ -584,6 +588,10 @@ extern size_t strlcpy(char *, const char *, size_t);
 
 #if !HAVE_STRTONUM
 extern long long strtonum(const char *, long long, long long, const char **);
+#endif
+
+#if !HAVE_UNVEIL
+# define unveil(a, b) (0)
 #endif
 
 #ifndef __dead
