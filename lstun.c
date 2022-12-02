@@ -285,7 +285,7 @@ bind_socket(void)
 	const char *c, *h, *port, *cause;
 
 	if ((c = strchr(addr, ':')) == NULL) {
-		h = NULL;
+		h = "localhost";
 		port = addr;
 	} else {
 		if ((c = copysec(addr, host, sizeof(host))) == NULL)
