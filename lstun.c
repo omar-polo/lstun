@@ -312,14 +312,6 @@ bind_socket(void)
 			continue;
 		}
 
-		if (bind(socks[nsock], res->ai_addr, res->ai_addrlen) == -1) {
-			cause = "bind";
-			saved_errno = errno;
-			close(socks[nsock]);
-			errno = saved_errno;
-			continue;
-		}
-
 		v = 1;
 		if (setsockopt(socks[nsock], SOL_SOCKET, SO_REUSEADDR, &v,
 		    sizeof(v)) == -1)
@@ -329,6 +321,14 @@ bind_socket(void)
 		if (setsockopt(socks[nsock], SOL_SOCKET, SO_REUSEPORT, &v,
 		    sizeof(v)) == -1)
 			fatal("setsockopt(SO_REUSEPORT)");
+
+		if (bind(socks[nsock], res->ai_addr, res->ai_addrlen) == -1) {
+			cause = "bind";
+			saved_errno = errno;
+			close(socks[nsock]);
+			errno = saved_errno;
+			continue;
+		}
 
 		listen(socks[nsock], 5);
 
