@@ -330,7 +330,8 @@ bind_socket(void)
 			continue;
 		}
 
-		listen(socks[nsock], 5);
+		if (listen(socks[nsock], 5) == -1)
+			fatal("listen");
 
 		nsock++;
 	}
